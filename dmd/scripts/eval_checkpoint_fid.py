@@ -1,11 +1,14 @@
 import argparse
 import json
 import random
+import sys
 from pathlib import Path
 
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
+
+sys.path.insert(0, Path(__file__).resolve().parents[1].as_posix())
 
 from dmd.fid import FID
 from dmd.modeling_utils import load_dmd_model

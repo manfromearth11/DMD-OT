@@ -147,7 +147,8 @@ dmd/scripts/prepare_cifar10_assets.sh
 ### 2. Real diffusion teacher cache 만들기
 
 이 단계가 무겁습니다. EDM teacher를 18-step sampler로 돌려서 teacher images와 latents를
-저장합니다. 내부적으로 `/home/$USER/edm/cache_teacher.py`를 호출합니다.
+저장합니다. 내부적으로 `dmd/scripts/build_edm_teacher_cache.py`를 호출하므로 별도의
+`~/edm` checkout은 필요 없습니다.
 
 Conditional 500K, class-balanced:
 
@@ -178,7 +179,6 @@ NUM_SAMPLES=500000 \
 PER_CLASS=50000 \
 BATCH=512 \
 SHARD_SIZE=8192 \
-EDM_REPO=/home/$USER/edm \
 dmd/scripts/build_cifar10_teacher_cache.sh
 ```
 

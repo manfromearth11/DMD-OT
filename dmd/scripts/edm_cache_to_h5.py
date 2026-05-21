@@ -3,6 +3,7 @@
 import argparse
 import os
 from pathlib import Path
+from typing import Optional
 
 import h5py
 import numpy as np
@@ -10,7 +11,7 @@ import torch
 from tqdm import tqdm
 
 
-def convert(cache_dir: Path, output: Path, max_samples: int | None = None) -> None:
+def convert(cache_dir: Path, output: Path, max_samples: Optional[int] = None) -> None:
     shard_paths = sorted(cache_dir.glob("shard-*.pt"))
     if not shard_paths:
         raise FileNotFoundError(f"No shard-*.pt files found in {cache_dir}")
@@ -21,7 +22,7 @@ def convert(cache_dir: Path, output: Path, max_samples: int | None = None) -> No
         tmp_output.unlink()
 
     written = 0
-    class_counts: dict[int, int] = {}
+    class_counts = {}
     with h5py.File(tmp_output, "w") as hf:
         hf.attrs["source_cache_dir"] = cache_dir.as_posix()
         hf.attrs["format"] = "dmd-cifar-pairs-array"
