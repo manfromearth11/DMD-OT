@@ -104,27 +104,59 @@ DMD training에서 빠르게 읽습니다.
 
 ```bash
 DATA_ROOT=/dataset/$USER
-PYTHON=/dataset/$USER/conda-envs/edm-h100-lpips/bin/python
+PYTHON=/dataset/$USER/conda-envs/dmd-ot/bin/python
 PYTHONPATH=<repo>/dmd:$PYTHONPATH
 WANDB_DIR=/dataset/$USER/wandb
 TMPDIR=/dataset/$USER/tmp
 ```
 
-이미 서버에 env가 있으면 그대로 씁니다.
+### Conda env 만들기
+
+새 서버에서는 먼저 env를 만듭니다. L40S/H100에서 확인한 기본 조합은
+Python 3.10 + PyTorch 2.5.1 CUDA 12.1입니다.
+
+```bash
+cd ~/DMD-OT
+
+export DATA_ROOT=$HOME/datasets
+dmd/scripts/create_conda_env.sh
+
+conda activate $DATA_ROOT/conda-envs/dmd-ot
+wandb login
+```
+
+기본 생성 위치:
+
+```text
+$DATA_ROOT/conda-envs/dmd-ot
+```
+
+이미 서버에 env가 있으면 그대로 써도 됩니다.
 
 ```bash
 conda activate /dataset/$USER/conda-envs/edm-h100-lpips
 wandb login
 ```
 
-새 env를 만들 때는 H100/CUDA에 맞는 PyTorch를 먼저 맞추는 것이 중요합니다. 원본 DMD의
-`dmd/environment.yml`은 오래된 PyTorch를 기준으로 하므로, 이 서버에서는 현재 쓰는
-`edm-h100-lpips` env를 기준으로 맞추는 편이 안전합니다.
+원본 DMD의 `dmd/environment.yml`은 PyTorch 1.12 계열이라 최신 H100/L40S 서버에서는
+맞지 않을 수 있습니다. 이 repo의 wrapper는 먼저 `$DATA_ROOT/conda-envs/dmd-ot`,
+그 다음 기존 `$DATA_ROOT/conda-envs/edm-h100-lpips`, 마지막으로 현재 shell의
+`$CONDA_PREFIX/bin/python`을 찾습니다.
 
 Wrapper에서 다른 Python을 쓰고 싶으면:
 
 ```bash
 PYTHON=/path/to/python dmd/scripts/train_cifar10_cached_dmd.sh
+```
+
+Env 생성 파라미터도 override할 수 있습니다.
+
+```bash
+ENV_NAME=dmd-ot-l40s \
+PYTHON_VERSION=3.10 \
+TORCH_VERSION=2.5.1+cu121 \
+TORCHVISION_VERSION=0.20.1+cu121 \
+dmd/scripts/create_conda_env.sh
 ```
 
 ## 데이터 준비 순서

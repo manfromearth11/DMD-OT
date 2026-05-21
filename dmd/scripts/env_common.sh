@@ -21,12 +21,21 @@ export PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
 mkdir -p "$TMPDIR" "$PYTHONPYCACHEPREFIX" "$WANDB_DIR" "$WANDB_CACHE_DIR" "$WANDB_CONFIG_DIR"
 
 if [[ -z "${PYTHON:-}" ]]; then
-  DEFAULT_PYTHON="$DATA_ROOT/conda-envs/edm-h100-lpips/bin/python"
-  if [[ -x "$DEFAULT_PYTHON" ]]; then
-    export PYTHON="$DEFAULT_PYTHON"
-  else
-    export PYTHON=python
+  DMD_ENV_NAME=${DMD_ENV_NAME:-dmd-ot}
+  python_candidates=(
+    "$DATA_ROOT/conda-envs/$DMD_ENV_NAME/bin/python"
+    "$DATA_ROOT/conda-envs/edm-h100-lpips/bin/python"
+  )
+  if [[ -n "${CONDA_PREFIX:-}" ]]; then
+    python_candidates+=("$CONDA_PREFIX/bin/python")
   fi
+  for candidate in "${python_candidates[@]}"; do
+    if [[ -n "$candidate" && -x "$candidate" ]]; then
+      export PYTHON="$candidate"
+      break
+    fi
+  done
+  export PYTHON=${PYTHON:-python}
 fi
 
 export PYTHONPATH="$REPO_ROOT/dmd:${PYTHONPATH:-}"
