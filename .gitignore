@@ -209,6 +209,15 @@ tempCodeRunnerFile.py
 # PyPI configuration file
 .pypirc
 
+# Local experiment launchers
+/run*.sh
+/rerun*.sh
+/scripts/run*.sh
+/scripts/rerun*.sh
+!/scripts/.gitkeep
+!/scripts/run_cifar10_dmd_original.sh
+!/scripts/run_cifar10_dmd_ot.sh
+
 # Marimo
 marimo/_static/
 marimo/_lsp/

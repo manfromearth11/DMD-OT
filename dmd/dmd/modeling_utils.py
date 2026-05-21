@@ -71,10 +71,12 @@ def load_dmd_model(model_path: str, device: torch.device, for_training: bool = F
         optimizer_kwargs (dict(str, any)): Optional keyword arguments to pass to the optimizer class (AdamW).
             This argument is ignored when `for_training` is set to `False`.
     """
+    model_dict = torch.load(model_path, map_location="cpu")
+    label_dim = 10 if "model.map_label.weight" in model_dict["model_g"] else 0
     model_g = EDMPrecond(
         img_resolution=32,
         img_channels=3,
-        label_dim=10,
+        label_dim=label_dim,
         resample_filter=[1, 1],
         embedding_type="positional",
         augment_dim=9,
@@ -85,7 +87,6 @@ def load_dmd_model(model_path: str, device: torch.device, for_training: bool = F
         model_channels=128,
         channel_mult=(2, 2, 2),
     )
-    model_dict = torch.load(model_path, map_location="cpu")
     model_g.load_state_dict(model_dict["model_g"])
     model_g.to(device)
     if not for_training:
@@ -94,7 +95,7 @@ def load_dmd_model(model_path: str, device: torch.device, for_training: bool = F
     model_d = EDMPrecond(
         img_resolution=32,
         img_channels=3,
-        label_dim=10,
+        label_dim=label_dim,
         resample_filter=[1, 1],
         embedding_type="positional",
         augment_dim=9,
