@@ -11,12 +11,12 @@ export BATCH_SIZE=${BATCH_SIZE:-128}
 export OT_EPS=${OT_EPS:-0.2}
 export OT_ITERS=${OT_ITERS:-30}
 export LAMBDA_K=${LAMBDA_K:-1}
+export DMD_SAMPLE_MODE=${DMD_SAMPLE_MODE:-matched}
 export DMD_LOSS_LAMBDA=${DMD_LOSS_LAMBDA:-0.25}
 export MAX_STEPS=${MAX_STEPS:-50000}
 export EVAL_EVERY=${EVAL_EVERY:-10000}
 export FID_NUM_SAMPLES=${FID_NUM_SAMPLES:-50000}
 export WANDB_PROJECT=${WANDB_PROJECT:-cifar10-dmd-ot}
-export NAME=${NAME:-${TASK}_dmd_ot_b${BATCH_SIZE}_eps${OT_EPS}_kl${LAMBDA_K}_${MAX_STEPS}}
+export NAME=${NAME:-${TASK}_dmd_ot_b${BATCH_SIZE}_eps${OT_EPS}_kl${LAMBDA_K}_${DMD_SAMPLE_MODE}_${MAX_STEPS}}
 
 exec "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/dmd/scripts/train_cifar10_cached_dmd.sh"
-

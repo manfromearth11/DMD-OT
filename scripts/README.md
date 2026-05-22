@@ -73,6 +73,19 @@ loss_reg = mean_i [N * P_i,j*(i) * LPIPS_224(x_i, y_j*(i))]
 
 `lambda_k=0` 실험에서는 fake denoiser를 훈련하거나 불필요하게 KL용 모델을 로드하지 않도록 했습니다.
 
+### DMD/KL sample source
+
+`--dmd-sample-mode=free|matched`를 추가했습니다.
+
+- `free`: 원래 DMD 방식입니다. Regression batch와 별도로 `z ~ N(0, I)` free sample을 뽑고,
+  그 sample에 대해 DMD KL term과 fake denoiser training을 수행합니다.
+- `matched`: OT/paired regression에 쓰는 같은 student batch `x_ref = G(z_ref)`에 대해
+  DMD KL term과 fake denoiser training을 수행합니다.
+
+기본값은 재현성을 위해 training wrapper에서는 `free`입니다. Canonical OT launcher
+`scripts/run_cifar10_dmd_ot.sh`는 OT matching과 KL을 같은 batch에 묶기 위해 기본값을
+`matched`로 둡니다. 원래 DMD baseline launcher는 `free`를 유지합니다.
+
 ### Cached teacher dataset
 
 EDM teacher sample을 매번 online으로 만들지 않고, 먼저 disk cache로 저장한 뒤 HDF5로 변환해서
@@ -321,6 +334,7 @@ Wrapper는 대부분 환경변수로 설정을 받습니다. 환경변수를 안
 | `EVAL_EVERY` | `10000` | FID/checkpoint 주기 |
 | `FID_NUM_SAMPLES` | `50000` | FID sample 수 |
 | `LAMBDA_K` | `0` | DMD KL term weight |
+| `DMD_SAMPLE_MODE` | `free` | DMD KL/fake denoising sample source: `free` 또는 `matched` |
 | `DMD_LOSS_LAMBDA` | `cond: 0.25`, `uncond: 0.5` | Regression loss weight |
 | `OT_EPS` | `0.2` | Sinkhorn epsilon |
 | `OT_ITERS` | `30` | Sinkhorn iteration 수 |

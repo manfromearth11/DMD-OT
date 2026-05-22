@@ -13,6 +13,7 @@ FID_NUM_SAMPLES=${FID_NUM_SAMPLES:-50000}
 LR=${LR:-5e-5}
 WEIGHT_DECAY=${WEIGHT_DECAY:-0.01}
 LAMBDA_K=${LAMBDA_K:-0}
+DMD_SAMPLE_MODE=${DMD_SAMPLE_MODE:-free}
 OT_EPS=${OT_EPS:-0.2}
 OT_ITERS=${OT_ITERS:-30}
 NUM_WORKERS=${NUM_WORKERS:-0}
@@ -92,6 +93,7 @@ args=(
   --fid-ref-path="$FID_REF"
   --fid-num-samples="$FID_NUM_SAMPLES"
   --lambda-k="$LAMBDA_K"
+  --dmd-sample-mode="$DMD_SAMPLE_MODE"
   --dmd-loss-lambda="$DMD_LOSS_LAMBDA"
   --lr="$LR"
   --weight-decay="$WEIGHT_DECAY"
@@ -127,6 +129,7 @@ echo "task:      $TASK"
 echo "method:    $METHOD"
 echo "batch:     $BATCH_SIZE"
 echo "lambda_k:  $LAMBDA_K"
+echo "dmd_sample:$DMD_SAMPLE_MODE"
 echo "classbatch:$CLASS_BATCH"
 echo "data:      $DATA_PATH"
 echo "out:       $RUN_DIR"

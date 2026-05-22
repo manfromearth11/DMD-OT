@@ -71,7 +71,10 @@ def train_one_epoch(
     print_freq: int = 10,
     im_save_freq: int = 300,
     train_diffuser: bool = True,
+    dmd_sample_mode: str = "free",
 ):
+    if dmd_sample_mode not in {"free", "matched"}:
+        raise ValueError(f"dmd_sample_mode must be 'free' or 'matched', got: {dmd_sample_mode}")
     amp_autocast = amp_autocast or suppress
     output_dir = Path(output_dir)
     images_dir = output_dir / "images"
@@ -95,7 +98,8 @@ def train_one_epoch(
             break
         global_step = start_step + steps_done + 1
         save_images = im_save_freq > 0 and global_step % im_save_freq == 0
-        need_free_sample = train_diffuser or getattr(loss_g, "lambda_k", 1.0) != 0 or save_images
+        need_dmd_sample = train_diffuser or getattr(loss_g, "lambda_k", 1.0) != 0
+        need_free_sample = dmd_sample_mode == "free" and (need_dmd_sample or save_images)
         y_ref = pairs["image"].to(device, non_blocking=True).to(torch.float32).clip(-1, 1)
         z_ref = pairs["latent"].to(device, non_blocking=True).to(torch.float32)
         generator_sigma = get_fixed_generator_sigma(y_ref.shape[0], device=device)
@@ -110,7 +114,8 @@ def train_one_epoch(
             # tanh after small experiment between (no-postprocess, tanh, clipping)
             x = generator(z, generator_sigma, class_labels=class_ids) if need_free_sample else None
             x_ref = generator(z_ref, generator_sigma, class_labels=class_ids)
-            l_g = loss_g(mu_real, mu_fake, x, x_ref, y_ref, class_ids)
+            x_dmd = x_ref if dmd_sample_mode == "matched" else x
+            l_g = loss_g(mu_real, mu_fake, x_dmd, x_ref, y_ref, class_ids)
             if not math.isfinite(l_g.item()):
                 print(f"Generator Loss is {l_g.item()}, stopping training")
                 sys.exit(1)
@@ -123,8 +128,8 @@ def train_one_epoch(
         if train_diffuser:
             with amp_autocast():
                 # Update mu_fake
-                t = torch.randint(1, 1000, [x.shape[0]])  # t ~ DU(1,1000) as t=0 leads 1/0^2 -> inf
-                l_d = loss_d(mu_fake, x, t, class_ids)
+                t = torch.randint(1, 1000, [x_dmd.shape[0]])  # t ~ DU(1,1000) as t=0 leads 1/0^2 -> inf
+                l_d = loss_d(mu_fake, x_dmd, t, class_ids)
                 if not math.isfinite(l_d.item()):
                     print(f"Diffusion Loss is {l_d.item()}, stopping training")
                     sys.exit(1)
@@ -149,14 +154,15 @@ def train_one_epoch(
             images_epoch_dir = images_dir / f"epoch_{epoch}"
             images_epoch_dir.mkdir(exist_ok=True)
             with torch.no_grad():
+                x_preview = x if x is not None else x_ref
                 if mu_real is not None and mu_fake is not None:
-                    t_preview = torch.randint(1, 1000, [x.shape[0]])
-                    x_t, sigma_t = forward_diffusion(x, t_preview)
+                    t_preview = torch.randint(1, 1000, [x_preview.shape[0]])
+                    x_t, sigma_t = forward_diffusion(x_preview, t_preview)
                     real_pred = mu_real(x_t, sigma_t, class_labels=class_ids)
                     fake_pred = mu_fake(x_t, sigma_t, class_labels=class_ids)
-                    image_rows = [x, real_pred, fake_pred, x_ref, y_ref]
+                    image_rows = [x_preview, real_pred, fake_pred, x_ref, y_ref]
                 else:
-                    image_rows = [x, x_ref, y_ref]
+                    image_rows = [x_preview, x_ref, y_ref]
             grid = _save_intermediate_images(images_epoch_dir, image_rows, f"iter_{i}")
             metric_logger.log_neptune(f"images", grid)
 

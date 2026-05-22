@@ -143,6 +143,7 @@ def train(
     skip_fid: bool = False,
     fid_ref_path: Optional[str] = None,
     train_diffuser: bool = True,
+    dmd_sample_mode: str = "free",
     checkpoint_handler: Optional[CheckpointHandler] = None,
 ):
     print(f"Start training for {epochs} epochs")
@@ -185,6 +186,7 @@ def train(
             print_freq=print_freq,
             im_save_freq=im_save_freq,
             train_diffuser=train_diffuser,
+            dmd_sample_mode=dmd_sample_mode,
         )
         global_step += steps_done
         if steps_done == 0:
@@ -254,6 +256,7 @@ def run(
     use_ot_reg: bool = False,
     ot_eps: float = 0.05,
     ot_iters: int = 30,
+    dmd_sample_mode: str = "free",
     class_batch: bool = False,
     ot_weight: Optional[str] = None,
     device: str = None,
@@ -300,6 +303,8 @@ def run(
         use_ot_reg (bool): Whether to replace paired LPIPS regression with OT-rematched LPIPS regression.
         ot_eps (float): Entropic Sinkhorn epsilon when `use_ot_reg` is enabled.
         ot_iters (int): Number of Sinkhorn iterations when `use_ot_reg` is enabled.
+        dmd_sample_mode (str): Samples used by DMD KL/fake denoising: 'free' for original DMD,
+            'matched' to reuse the regression/OT batch.
         class_batch (bool): Whether every training batch should contain samples from one class only.
         ot_weight (Optional[str]): Deprecated compatibility argument. OT always uses N * P[i, j*].
         device (Optional(str)): Device to run the models on. [default: None]
@@ -332,6 +337,8 @@ def run(
         warnings.warn("`output_dir` is set to `model_path` when `resume_from_checkpoint` is `True`.")
         output_dir = Path(model_path).parent
     output_dir = Path(output_dir)
+    if dmd_sample_mode not in ["free", "matched"]:
+        raise ValueError(f"dmd_sample_mode must be 'free' or 'matched', got: {dmd_sample_mode}")
     seed_everything(seed)
     # Prepare dataloader
     data_path = Path(data_path).resolve()
@@ -405,6 +412,7 @@ def run(
             "use_ot_reg": bool(use_ot_reg),
             "ot_eps": float(ot_eps),
             "ot_iters": int(ot_iters),
+            "dmd_sample_mode": dmd_sample_mode,
             "class_batch": bool(class_batch),
             "device": str(device),
             "cudnn_benchmark": cudnn_benchmark,
@@ -442,6 +450,7 @@ def run(
             "use_ot_reg": bool(use_ot_reg),
             "ot_eps": float(ot_eps),
             "ot_iters": int(ot_iters),
+            "dmd_sample_mode": dmd_sample_mode,
             "class_batch": bool(class_batch),
             "device": str(device),
             "max_norm": max_norm,
@@ -489,6 +498,7 @@ def run(
         skip_fid=skip_fid,
         fid_ref_path=fid_ref_path,
         train_diffuser=train_diffuser,
+        dmd_sample_mode=dmd_sample_mode,
         checkpoint_handler=checkpoint_handler,
     )
 
